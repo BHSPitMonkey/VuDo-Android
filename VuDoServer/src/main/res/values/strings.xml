@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">VuDo Server</string>
+    <string name="app_name">VuDo: Receive</string>
+    <string name="settings_launcher_name">VuDo Settings</string>
 </resources>

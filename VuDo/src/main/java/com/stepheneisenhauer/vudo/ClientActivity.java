@@ -28,8 +28,8 @@ public class ClientActivity extends Activity {
         // Create a new VIEW intent based on the contents of this intent
         // TODO: This isn't quite right yet
 
-        Log.d(TAG, "Intent data URI is:");
-        Log.d(TAG, intent.getDataString());
+        //Log.d(TAG, "Intent data URI is:");
+        //Log.d(TAG, intent.getDataString());
         //Log.d(TAG, "Intent extra text is:");
         //Log.d(TAG, intent.getStringExtra(Intent.EXTRA_TEXT));
 

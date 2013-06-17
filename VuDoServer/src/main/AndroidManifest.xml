@@ -2,11 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.stepheneisenhauer.vudoserver"
     android:versionCode="1"
-    android:versionName="1.0" >
+    android:versionName="1.0-alpha" >
 
     <uses-sdk
         android:minSdkVersion="7"
         android:targetSdkVersion="16" />
+
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -16,14 +18,14 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-        <activity
+        <!--activity
             android:name="com.stepheneisenhauer.vudoserver.SettingsActivity"
-            android:label="@string/app_name" >
+            android:label="@string/settings_launcher_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-->
         <service android:name=".ListenerService"/>
         <receiver android:name=".ServiceStarter">
             <intent-filter>

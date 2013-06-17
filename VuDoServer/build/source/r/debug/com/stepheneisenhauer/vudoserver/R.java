@@ -35,6 +35,7 @@ public final class R {
         public static final int pref_title_sync_frequency=0x7f05000c;
         public static final int pref_title_system_sync_settings=0x7f05000d;
         public static final int pref_title_vibrate=0x7f05000e;
+        public static final int settings_launcher_name=0x7f05000f;
     }
     public static final class style {
         /** 

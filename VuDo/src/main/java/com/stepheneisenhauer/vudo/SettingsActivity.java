@@ -2,6 +2,7 @@ package com.stepheneisenhauer.vudo;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -45,6 +46,10 @@ public class SettingsActivity extends PreferenceActivity {
         super.onPostCreate(savedInstanceState);
 
         setupSimplePreferencesScreen();
+
+        // Debug: Create a VIEW intent with actual image data included
+        //Intent intent = new Intent(Intent.ACTION_VIEW);
+        //intent.set
     }
 
     /**
