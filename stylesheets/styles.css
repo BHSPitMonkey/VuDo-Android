@@ -715,7 +715,8 @@ dt {
   background: blue;
   margin: 6px auto;
 }
-#header nav li {
+#header nav li,
+.fancy-button {
   font-family: 'OpenSansLight', "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: normal;
   list-style: none;
