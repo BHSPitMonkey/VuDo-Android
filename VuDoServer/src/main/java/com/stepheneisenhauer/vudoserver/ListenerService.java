@@ -1,7 +1,10 @@
 package com.stepheneisenhauer.vudoserver;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.net.nsd.NsdManager;
+import android.net.nsd.NsdServiceInfo;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
@@ -10,18 +13,47 @@ import com.androidzeitgeist.ani.discovery.Discovery;
 import com.androidzeitgeist.ani.discovery.DiscoveryException;
 import com.androidzeitgeist.ani.discovery.DiscoveryListener;
 
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 
 /**
  * Created by stephen on 6/15/13.
  */
 public class ListenerService extends Service {
-    private static final String TAG = "ListenerService";
+    static final String TAG = "ListenerService";
+    String mServiceName = "VuDo";
+    NsdManager.RegistrationListener mRegistrationListener;
+    NsdManager mNsdManager;
+    int port;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
+        // Find a free port to use
+        port = 0;
+        try {
+            ServerSocket ss = new ServerSocket(0);
+            port = ss.getLocalPort();
+            ss.close();
+        } catch (IOException e) {
+            port = 9600;
+        }
+        port = 9600;
+
+        // Start the HTTP server
+        HttpServer httpd = new HttpServer(port, this);
+        try {
+            httpd.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Register the service on the network for discovery
+        registerNetworkService();
+
+        /*
         // (1) Implement a listener
 
         DiscoveryListener listener = new DiscoveryListener() {
@@ -70,6 +102,51 @@ public class ListenerService extends Service {
         } catch (DiscoveryException exception) {
             Toast.makeText(ListenerService.this, "Error enabling VuDo discovery", Toast.LENGTH_SHORT).show();
         }
+        */
+    }
+
+    private void initializeRegistrationListener() {
+        mRegistrationListener = new NsdManager.RegistrationListener() {
+
+            @Override
+            public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) {
+                // Save the service name.  Android may have changed it in order to
+                // resolve a conflict, so update the name you initially requested
+                // with the name Android actually used.
+                mServiceName = NsdServiceInfo.getServiceName();
+            }
+
+            @Override
+            public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                // Registration failed!  Put debugging code here to determine why.
+            }
+
+            @Override
+            public void onServiceUnregistered(NsdServiceInfo arg0) {
+                // Service has been unregistered.  This only happens when you call
+                // NsdManager.unregisterService() and pass in this listener.
+            }
+
+            @Override
+            public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                // Unregistration failed.  Put debugging code here to determine why.
+            }
+        };
+    }
+
+    private void registerNetworkService() {
+        initializeRegistrationListener();
+
+        // Create the NsdServiceInfo object, and populate it.
+        NsdServiceInfo serviceInfo  = new NsdServiceInfo();
+        serviceInfo.setServiceName(mServiceName);
+        serviceInfo.setServiceType("_http._tcp.");
+        serviceInfo.setPort(port);
+
+        // Register the discovery service using the NSD Manager
+        mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
+        mNsdManager.registerService(
+                serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
     }
 
     public IBinder onBind(Intent intent) {
