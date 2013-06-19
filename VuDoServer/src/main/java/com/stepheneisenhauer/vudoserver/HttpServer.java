@@ -27,24 +27,46 @@ public class HttpServer extends NanoHTTPD {
         Log.d(TAG, "Request received with URI: ");
         Log.d(TAG, uri);
         // Handle URI "view"
-        if (uri.equals("view")) {
-            // Handle command type type "uri"
-            if (parms.get("type").equals("uri")) {
-                String uriString = parms.get("uri");
-                if (uriString != null) {
-                    // TODO: Validate this URI
-                    Uri uriObj = Uri.parse(uriString);
-                    Intent intent = new Intent(Intent.ACTION_VIEW, uriObj);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    intent.setComponent(null);
-                    service.startActivity(intent);
-                    Log.i(TAG, "Launching a VIEW intent now.");
-                }
-            }
-
-            return new Response(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, (String) "");
+        if (uri.equals("/view")) {
+            String type = parms.get("type");
+            if (type != null) {
+                if (type.equals("uri")) {
+                    String uriString = parms.get("uri");
+                    if (uriString != null && !uriString.isEmpty()) {
+                        // TODO: Validate this URI better
+                        try {
+                            Uri uriObj = Uri.parse(uriString);
+                            Intent intent = new Intent(Intent.ACTION_VIEW, uriObj);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            intent.setComponent(null);
+                            service.startActivity(intent);
+                            Log.i(TAG, "Launching a VIEW intent now.");
+                            return okResponse();
+                        } catch (Exception e) {
+                            Log.e("Caught an exception while parsing/displaying a URI");
+                            return badRequestResponse();
+                        }
+                    }
+                } // end if type==uri
+                else if (type.equals("image")) {
+                    // TODO
+                } // end if type==image
+            } // end if type param != null
+            return badRequestResponse();
         }
 
+        return notFoundResponse();
+    }
+
+    Response okResponse() {
+        return new Response(Response.Status.OK, MIME_PLAINTEXT, (String) "");
+    }
+
+    Response notFoundResponse() {
         return new Response(Response.Status.NOT_FOUND, MIME_PLAINTEXT, (String) "");
+    }
+
+    Response badRequestResponse() {
+        return new Response(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, (String) "");
     }
 }

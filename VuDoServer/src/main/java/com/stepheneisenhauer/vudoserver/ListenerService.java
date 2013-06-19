@@ -31,6 +31,8 @@ public class ListenerService extends Service {
     public void onCreate() {
         super.onCreate();
 
+        // TODO: Move pretty much all of this into a thread
+
         // Find a free port to use
         port = 0;
         try {
@@ -46,6 +48,7 @@ public class ListenerService extends Service {
         HttpServer httpd = new HttpServer(port, this);
         try {
             httpd.start();
+            Log.d(TAG, "HTTPD should be started now, on port 9600");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -114,11 +117,13 @@ public class ListenerService extends Service {
                 // resolve a conflict, so update the name you initially requested
                 // with the name Android actually used.
                 mServiceName = NsdServiceInfo.getServiceName();
+                Log.d(TAG, "NSD service registered.");
             }
 
             @Override
             public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
                 // Registration failed!  Put debugging code here to determine why.
+                Log.d(TAG, "NSD service registration failed.");
             }
 
             @Override
