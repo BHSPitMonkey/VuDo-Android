@@ -15,7 +15,7 @@ import com.androidzeitgeist.ani.transmitter.TransmitterException;
  * Created by stephen on 6/15/13.
  */
 public class ClientActivity extends Activity {
-    private static final String TAG = "ClientActivity";
+    private static final String TAG = "VuDo/ClientActivity";
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

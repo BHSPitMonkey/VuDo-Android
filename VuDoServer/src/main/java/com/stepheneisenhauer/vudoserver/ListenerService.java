@@ -21,7 +21,7 @@ import java.net.ServerSocket;
  * Created by stephen on 6/15/13.
  */
 public class ListenerService extends Service {
-    static final String TAG = "ListenerService";
+    static final String TAG = "VuDo/ListenerService";
     String mServiceName = "VuDo";
     NsdManager.RegistrationListener mRegistrationListener;
     NsdManager mNsdManager;
@@ -34,6 +34,7 @@ public class ListenerService extends Service {
         // TODO: Move pretty much all of this into a thread
 
         // Find a free port to use
+        /*
         port = 0;
         try {
             ServerSocket ss = new ServerSocket(0);
@@ -41,73 +42,24 @@ public class ListenerService extends Service {
             ss.close();
         } catch (IOException e) {
             port = 9600;
-        }
+        } */
         port = 9600;
 
         // Start the HTTP server
-        HttpServer httpd = new HttpServer(port, this);
+
         try {
-            httpd.start();
+            HttpServer httpd = new HttpServer(port, this);
+            httpd.startServer();
             Log.d(TAG, "HTTPD should be started now, on port 9600");
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        // Register the service on the network for discovery
-        registerNetworkService();
-
-        /*
-        // (1) Implement a listener
-
-        DiscoveryListener listener = new DiscoveryListener() {
-            public void onDiscoveryStarted() {
-                // The discovery has been started in the background and is now waiting
-                // for incoming Intents.
-
-                //Toast.makeText(ListenerService.this, "Now listening for VuDu events", Toast.LENGTH_SHORT).show();
-                Log.i(TAG, "Now listening for VuDo events");
-            }
-
-            public void onDiscoveryStopped() {
-                // The discovery has been stopped. The listener won't be notified for
-                // any incoming Intents anymore.
-
-                //Toast.makeText(ListenerService.this, "VuDu discovery has stopped", Toast.LENGTH_SHORT).show();
-                Log.w(TAG, "VuDo discovery has stopped");
-            }
-
-            public void onDiscoveryError(Exception exception) {
-                // A (network) error has occurred that prevents the discovery from working
-                // probably. The actual Exception that has been thrown in the background
-                // thread is passed to this method. A call of this method is almost always
-                // followed by a call to onDiscoveryStopped()
-
-                //Toast.makeText(ListenerService.this, "Error with VuDu discovery", Toast.LENGTH_SHORT).show();
-                Log.e(TAG, "Error with VuDo discovery");
-            }
-
-            public void onIntentDiscovered(InetAddress address, Intent intent) {
-                // An Intent has been successfully received from the given address.
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.setComponent(null);
-                startActivity(intent);
-                Log.i(TAG, "Received a VuDo intent; Launching it now");
-            }
-        };
-
-        // (2) Create and start a discovery
-
-        Discovery discovery = new Discovery();
-        discovery.setDisoveryListener(listener);
-
-        try {
-            discovery.enable(); // Start discovery
-        } catch (DiscoveryException exception) {
-            Toast.makeText(ListenerService.this, "Error enabling VuDo discovery", Toast.LENGTH_SHORT).show();
-        }
-        */
+        // Register the service on the network for discovery (Android 4.1+)
+        //registerNetworkService();
     }
 
+    /*
     private void initializeRegistrationListener() {
         mRegistrationListener = new NsdManager.RegistrationListener() {
 
@@ -153,6 +105,7 @@ public class ListenerService extends Service {
         mNsdManager.registerService(
                 serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
     }
+    */
 
     public IBinder onBind(Intent intent) {
         return null;
