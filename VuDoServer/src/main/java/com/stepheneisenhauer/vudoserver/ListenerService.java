@@ -1,20 +1,23 @@
 package com.stepheneisenhauer.vudoserver;
 
+import android.annotation.TargetApi;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.androidzeitgeist.ani.discovery.Discovery;
-import com.androidzeitgeist.ani.discovery.DiscoveryException;
-import com.androidzeitgeist.ani.discovery.DiscoveryListener;
+import com.koushikdutta.async.http.body.AsyncHttpRequestBody;
+import com.koushikdutta.async.http.server.AsyncHttpServer;
+import com.koushikdutta.async.http.server.AsyncHttpServerRequest;
+import com.koushikdutta.async.http.server.AsyncHttpServerResponse;
+import com.koushikdutta.async.http.server.HttpServerRequestCallback;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 
 /**
@@ -23,43 +26,49 @@ import java.net.ServerSocket;
 public class ListenerService extends Service {
     static final String TAG = "VuDo/ListenerService";
     String mServiceName = "VuDo";
-    NsdManager.RegistrationListener mRegistrationListener;
+    int mLocalPort;
+    AsyncHttpServer server = new AsyncHttpServer();
     NsdManager mNsdManager;
-    int port;
+    NsdManager.RegistrationListener mRegistrationListener;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        // TODO: Move pretty much all of this into a thread
-
         // Find a free port to use
-        /*
-        port = 0;
         try {
             ServerSocket ss = new ServerSocket(0);
-            port = ss.getLocalPort();
+            mLocalPort = ss.getLocalPort();
             ss.close();
         } catch (IOException e) {
-            port = 9600;
-        } */
-        port = 9600;
-
-        // Start the HTTP server
-
-        try {
-            HttpServer httpd = new HttpServer(port, this);
-            httpd.startServer();
-            Log.d(TAG, "HTTPD should be started now, on port 9600");
-        } catch (IOException e) {
-            e.printStackTrace();
+            mLocalPort = 9600;
         }
 
+        // Define API endpoints
+        server.get("/", new HttpServerRequestCallback() {
+            @Override
+            public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
+                response.send("VuDo: Receive is active.");
+            }
+        });
+        server.post("/view", new HttpServerRequestCallback() {
+            @Override
+            public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
+                // Interpret the POST request and take action
+                // TODO
+                //AsyncHttpRequestBody body = request.getBody();
+
+            }
+        });
+
+        // Start listening on port 5000
+        server.listen(mLocalPort);
+        Log.d(TAG, "Listening on port " + mLocalPort);
+
         // Register the service on the network for discovery (Android 4.1+)
-        //registerNetworkService();
+        registerNetworkService();
     }
 
-    /*
     private void initializeRegistrationListener() {
         mRegistrationListener = new NsdManager.RegistrationListener() {
 
@@ -96,16 +105,16 @@ public class ListenerService extends Service {
 
         // Create the NsdServiceInfo object, and populate it.
         NsdServiceInfo serviceInfo  = new NsdServiceInfo();
-        serviceInfo.setServiceName(mServiceName);
-        serviceInfo.setServiceType("_http._tcp.");
-        serviceInfo.setPort(port);
+        serviceInfo.setServiceName(android.os.Build.MODEL);
+        serviceInfo.setServiceType("_vudo._tcp.");
+        serviceInfo.setPort(mLocalPort);
 
         // Register the discovery service using the NSD Manager
         mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
         mNsdManager.registerService(
                 serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
     }
-    */
+
 
     public IBinder onBind(Intent intent) {
         return null;

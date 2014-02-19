@@ -3,22 +3,22 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.4'
+        classpath 'com.android.tools.build:gradle:0.8.+'
     }
 }
 apply plugin: 'android'
 
 dependencies {
     compile files('libs/android-support-v4.jar')
-    compile files('../libs/android-network-intents-1.0-SNAPSHOT.jar')
+    compile files('../libs/androidasync-1.2.1.jar')
 }
 
 android {
-    compileSdkVersion 17
-    buildToolsVersion "17.0.0"
+    compileSdkVersion 19
+    buildToolsVersion "19.0.1"
 
     defaultConfig {
         minSdkVersion 7
-        targetSdkVersion 16
+        targetSdkVersion 19
     }
 }

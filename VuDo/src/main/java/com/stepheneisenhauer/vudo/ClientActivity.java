@@ -8,8 +8,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
-import com.androidzeitgeist.ani.transmitter.Transmitter;
-import com.androidzeitgeist.ani.transmitter.TransmitterException;
 
 /**
  * Created by stephen on 6/15/13.
@@ -25,15 +23,22 @@ public class ClientActivity extends Activity {
         String action = intent.getAction();
         String type = intent.getType();
 
-        // Create a new VIEW intent based on the contents of this intent
-        // TODO: This isn't quite right yet
-
         //Log.d(TAG, "Intent data URI is:");
         //Log.d(TAG, intent.getDataString());
         //Log.d(TAG, "Intent extra text is:");
         //Log.d(TAG, intent.getStringExtra(Intent.EXTRA_TEXT));
 
-        Intent viewIntent = null;  // This will be our new Intent we'll send to the server(s)
+        // Discover VuDo servers
+        // TODO
+
+        // If no servers found, just show an appropriate message and return
+        // TODO
+        if (false) {
+            String message = "No VuDo servers found.";
+            Toast toast = Toast.makeText(ClientActivity.this, message, Toast.LENGTH_SHORT);
+            toast.show();
+            return;
+        }
 
         // Decide how to handle the intent
         if (Intent.ACTION_SEND.equals(action) && type != null) {
@@ -45,11 +50,12 @@ public class ClientActivity extends Activity {
                     return;
                 }
 
-                // If the EXTRA_TEXT field looks like a URI, let's make a VIEW intent from it.
+                // If the EXTRA_TEXT field looks like a URI...
                 try {
                     Uri uri = Uri.parse(text);
                     // Note: I'm not sure if the URI is guaranteed to be valid at this point
-                    viewIntent = new Intent(Intent.ACTION_VIEW, uri);
+                    // Send a HTTP POST request to the selected server(s):
+                    // TODO
                 } catch (Exception e) {
                     Log.d(TAG, "There was an exception parsing the text as a URI.");
                 }
@@ -66,12 +72,6 @@ public class ClientActivity extends Activity {
         else {
             // Handle other intents, such as being started from the home screen
         }
-
-        // Begin handling transmission of intent asynchronously
-        if (viewIntent != null)
-            new TransmitIntentTask().execute(viewIntent);
-        else
-            Log.d(TAG, "viewIntent was null after processing. Nothing to transmit.");
 
         finish();
     }
@@ -105,6 +105,7 @@ public class ClientActivity extends Activity {
     }
     */
 
+    /*
     class TransmitIntentTask extends AsyncTask<Intent, Void, CharSequence> {
         // Do the long-running work in here
         protected CharSequence doInBackground(Intent... intents) {
@@ -134,5 +135,6 @@ public class ClientActivity extends Activity {
             toast.show();
         }
     }
+    */
 }
 

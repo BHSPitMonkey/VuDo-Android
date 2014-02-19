@@ -1,4 +1,6 @@
+/*
 package com.stepheneisenhauer.vudoserver;
+
 
 import android.content.Intent;
 import android.net.Uri;
@@ -8,11 +10,6 @@ import java.io.IOException;
 import java.util.Properties;
 
 
-/**
- * Our custom HTTP server for handling commands from VuDu clients.
- *
- * Created by stephen on 6/17/13.
- */
 public class HttpServer extends AndroidHTTPD {
     private static final String TAG = "VuDo/HttpServer";
     ListenerService service;
@@ -71,3 +68,4 @@ public class HttpServer extends AndroidHTTPD {
         return new Response(HTTP_BADREQUEST, MIME_PLAINTEXT, "");
     }
 }
+ */
