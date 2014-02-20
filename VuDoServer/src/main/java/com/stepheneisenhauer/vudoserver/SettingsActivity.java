@@ -47,6 +47,9 @@ public class SettingsActivity extends PreferenceActivity {
 
         setupSimplePreferencesScreen();
 
+        Intent myIntent = new Intent(this, ListenerService.class);
+        this.startService(myIntent);
+
         // Probably shouldn't try to start the service unless we're sure it isn't already up
         //Intent myIntent = new Intent(this, ListenerService.class);
         //startService(myIntent);

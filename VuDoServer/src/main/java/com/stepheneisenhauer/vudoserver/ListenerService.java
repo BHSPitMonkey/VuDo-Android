@@ -1,78 +1,161 @@
 package com.stepheneisenhauer.vudoserver;
 
+import android.annotation.TargetApi;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
+import android.net.nsd.NsdManager;
+import android.net.nsd.NsdServiceInfo;
+import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.androidzeitgeist.ani.discovery.Discovery;
-import com.androidzeitgeist.ani.discovery.DiscoveryException;
-import com.androidzeitgeist.ani.discovery.DiscoveryListener;
+import com.koushikdutta.async.http.body.AsyncHttpRequestBody;
+import com.koushikdutta.async.http.body.JSONObjectBody;
+import com.koushikdutta.async.http.server.AsyncHttpServer;
+import com.koushikdutta.async.http.server.AsyncHttpServerRequest;
+import com.koushikdutta.async.http.server.AsyncHttpServerResponse;
+import com.koushikdutta.async.http.server.HttpServerRequestCallback;
 
-import java.net.InetAddress;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.net.ServerSocket;
 
 /**
  * Created by stephen on 6/15/13.
  */
 public class ListenerService extends Service {
-    private static final String TAG = "ListenerService";
+    static final String TAG = "VuDo/ListenerService";
+    String mServiceName = "VuDo";
+    String mServiceType = "_vudo._tcp.";
+    int mLocalPort;
+    AsyncHttpServer server = new AsyncHttpServer();
+    NsdManager mNsdManager;
+    NsdManager.RegistrationListener mRegistrationListener;
+    Handler handler;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        handler = new Handler();
 
-        // (1) Implement a listener
+        // Find a free port to use
+        try {
+            ServerSocket ss = new ServerSocket(0);
+            mLocalPort = ss.getLocalPort();
+            ss.close();
+        } catch (IOException e) {
+            mLocalPort = 9600;
+        }
 
-        DiscoveryListener listener = new DiscoveryListener() {
-            public void onDiscoveryStarted() {
-                // The discovery has been started in the background and is now waiting
-                // for incoming Intents.
+        // Define API endpoints
+        server.get("/", new HttpServerRequestCallback() {
+            @Override
+            public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
+                response.send("VuDo: Receive is active.");
+            }
+        });
+        server.post("/view", new HttpServerRequestCallback() {
+            @Override
+            public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
+                // Interpret the POST request and take action
+                JSONObjectBody body = (JSONObjectBody)request.getBody();
+                JSONObject json = body.get();
+                try {
+                    String type = json.getString("type");
+                    if (type.equals("uri")) {
+                        Uri uri = Uri.parse(json.getString("uri"));
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        intent.setComponent(null);
+                        startActivity(intent);
+                    }
+                    else if (type.equals("text")) {
+                        // Display text as a Toast notification
+                        final String text = json.getString("text");
+                        handler.post(new Runnable() {
+                           public void run() {
+                               Toast toast = Toast.makeText(ListenerService.this, text, Toast.LENGTH_LONG);
+                               toast.show();
+                           }
+                        });
+                        response.send("");
+                    }
+                    else if (type.equals("image")) {
 
-                //Toast.makeText(ListenerService.this, "Now listening for VuDu events", Toast.LENGTH_SHORT).show();
-                Log.i(TAG, "Now listening for VuDo events");
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                response.responseCode(400);
+                response.send("");
+            }
+        });
+
+        // Start listening on port 5000
+        server.listen(mLocalPort);
+        Log.d(TAG, "Listening on port " + mLocalPort);
+
+        // Register the service on the network for discovery (Android 4.1+)
+        registerNetworkService();
+    }
+
+    private void initializeRegistrationListener() {
+        mRegistrationListener = new NsdManager.RegistrationListener() {
+
+            @Override
+            public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) {
+                // Save the service name.  Android may have changed it in order to
+                // resolve a conflict, so update the name you initially requested
+                // with the name Android actually used.
+                mServiceName = NsdServiceInfo.getServiceName();
+                Log.d(TAG, "NSD service registered.");
             }
 
-            public void onDiscoveryStopped() {
-                // The discovery has been stopped. The listener won't be notified for
-                // any incoming Intents anymore.
-
-                //Toast.makeText(ListenerService.this, "VuDu discovery has stopped", Toast.LENGTH_SHORT).show();
-                Log.w(TAG, "VuDo discovery has stopped");
+            @Override
+            public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                // Registration failed!  Put debugging code here to determine why.
+                Log.d(TAG, "NSD service registration failed.");
             }
 
-            public void onDiscoveryError(Exception exception) {
-                // A (network) error has occurred that prevents the discovery from working
-                // probably. The actual Exception that has been thrown in the background
-                // thread is passed to this method. A call of this method is almost always
-                // followed by a call to onDiscoveryStopped()
-
-                //Toast.makeText(ListenerService.this, "Error with VuDu discovery", Toast.LENGTH_SHORT).show();
-                Log.e(TAG, "Error with VuDo discovery");
+            @Override
+            public void onServiceUnregistered(NsdServiceInfo arg0) {
+                // Service has been unregistered.  This only happens when you call
+                // NsdManager.unregisterService() and pass in this listener.
             }
 
-            public void onIntentDiscovered(InetAddress address, Intent intent) {
-                // An Intent has been successfully received from the given address.
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.setComponent(null);
-                startActivity(intent);
-                Log.i(TAG, "Received a VuDo intent; Launching it now");
+            @Override
+            public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                // Unregistration failed.  Put debugging code here to determine why.
             }
         };
-
-        // (2) Create and start a discovery
-
-        Discovery discovery = new Discovery();
-        discovery.setDisoveryListener(listener);
-
-        try {
-            discovery.enable(); // Start discovery
-        } catch (DiscoveryException exception) {
-            Toast.makeText(ListenerService.this, "Error enabling VuDo discovery", Toast.LENGTH_SHORT).show();
-        }
     }
+
+    private void registerNetworkService() {
+        initializeRegistrationListener();
+
+        // Create the NsdServiceInfo object, and populate it.
+        NsdServiceInfo serviceInfo = new NsdServiceInfo();
+        serviceInfo.setServiceName(android.os.Build.MODEL);
+        serviceInfo.setServiceType(mServiceType);
+        serviceInfo.setPort(mLocalPort);
+
+        // Register the discovery service using the NSD Manager
+        mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
+        mNsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
+    }
+
 
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    public void onDestroy() {
+        mNsdManager.unregisterService(mRegistrationListener);
     }
 }

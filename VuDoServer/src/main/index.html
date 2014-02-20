@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>VuDo: Receive</title>
+    <style>
+      body {
+        font-family: sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>VuDo: Receive</h1>
+    <h2>Web Control Panel</h2>
+
+    <frameset>
+        <legend>View a URI/URL</legend>
+        <form method="POST" action="/view">
+            <input name="uri" placeholder="http://google.com">
+            <input name="type" value="uri" type="hidden">
+            <button type="submit">Send to Device</button>
+        </form>
+    </frameset>
+    <frameset>
+        <legend>Display some Text</legend>
+        <form method="POST" action="/view">
+            <input name="text" placeholder="Hello, World!">
+            <input name="type" value="text" type="hidden">
+            <button type="submit">Send to Device</button>
+        </form>
+    </frameset>
+  </body>
+</html>
