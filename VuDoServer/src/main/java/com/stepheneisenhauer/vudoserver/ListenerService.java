@@ -4,18 +4,24 @@ import android.annotation.TargetApi;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.koushikdutta.async.http.body.AsyncHttpRequestBody;
+import com.koushikdutta.async.http.body.JSONObjectBody;
 import com.koushikdutta.async.http.server.AsyncHttpServer;
 import com.koushikdutta.async.http.server.AsyncHttpServerRequest;
 import com.koushikdutta.async.http.server.AsyncHttpServerResponse;
 import com.koushikdutta.async.http.server.HttpServerRequestCallback;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -26,14 +32,17 @@ import java.net.ServerSocket;
 public class ListenerService extends Service {
     static final String TAG = "VuDo/ListenerService";
     String mServiceName = "VuDo";
+    String mServiceType = "_vudo._tcp.";
     int mLocalPort;
     AsyncHttpServer server = new AsyncHttpServer();
     NsdManager mNsdManager;
     NsdManager.RegistrationListener mRegistrationListener;
+    Handler handler;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        handler = new Handler();
 
         // Find a free port to use
         try {
@@ -55,9 +64,36 @@ public class ListenerService extends Service {
             @Override
             public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
                 // Interpret the POST request and take action
-                // TODO
-                //AsyncHttpRequestBody body = request.getBody();
+                JSONObjectBody body = (JSONObjectBody)request.getBody();
+                JSONObject json = body.get();
+                try {
+                    String type = json.getString("type");
+                    if (type.equals("uri")) {
+                        Uri uri = Uri.parse(json.getString("uri"));
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        intent.setComponent(null);
+                        startActivity(intent);
+                    }
+                    else if (type.equals("text")) {
+                        // Display text as a Toast notification
+                        final String text = json.getString("text");
+                        handler.post(new Runnable() {
+                           public void run() {
+                               Toast toast = Toast.makeText(ListenerService.this, text, Toast.LENGTH_LONG);
+                               toast.show();
+                           }
+                        });
+                        response.send("");
+                    }
+                    else if (type.equals("image")) {
 
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                response.responseCode(400);
+                response.send("");
             }
         });
 
@@ -104,19 +140,22 @@ public class ListenerService extends Service {
         initializeRegistrationListener();
 
         // Create the NsdServiceInfo object, and populate it.
-        NsdServiceInfo serviceInfo  = new NsdServiceInfo();
+        NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setServiceName(android.os.Build.MODEL);
-        serviceInfo.setServiceType("_vudo._tcp.");
+        serviceInfo.setServiceType(mServiceType);
         serviceInfo.setPort(mLocalPort);
 
         // Register the discovery service using the NSD Manager
         mNsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
-        mNsdManager.registerService(
-                serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
+        mNsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
     }
 
 
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    public void onDestroy() {
+        mNsdManager.unregisterService(mRegistrationListener);
     }
 }
