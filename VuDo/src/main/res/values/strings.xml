@@ -2,4 +2,5 @@
     <string name="app_name">VuDo: Send</string>
     <string name="settings_launcher_name">VuDo Settings</string>
     <string name="chooser_label">Send to VuDo Receivers</string>
+    <string name="dialog_scanning">Scanning for receivers...</string>
 </resources>

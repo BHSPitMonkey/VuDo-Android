@@ -1,7 +1,9 @@
 package com.stepheneisenhauer.vudo;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.net.nsd.NsdManager;
@@ -51,16 +53,23 @@ public class ClientActivity extends Activity {
         handler = new Handler();
 
         // Begin discovering VuDo servers
+        Log.d(TAG, "Starting service discovery");
         initializeDiscoveryListener();
         initializeResolveListener();
         mNsdManager.discoverServices(mServiceType, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
 
+        // Set up Dialog
+        DiscoveryDialogFragment df = new DiscoveryDialogFragment();
+        df.show(getFragmentManager(), "DiscoveryDialog");
+
         // After a 1s timeout, check what has been discovered and continue
+        /*
         handler.postDelayed(new Runnable() {
             public void run() {
                 checkDiscoveredServers();
             }
         }, 1000);
+        */
 
         //finish(); // when do we do this???
     }
